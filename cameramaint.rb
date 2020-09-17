@@ -289,4 +289,5 @@ def main
   cards.each {|card| cleanup_card(card) }
 end
 
+# Set everything in motion.
 main
