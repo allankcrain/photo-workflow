@@ -46,6 +46,10 @@ MINIMUM_DAY_BREAK = 4 * 3600
 #
 # Mainly this is just the filename and date timestamp.
 class CameraFile
+
+  # The current date/time; used for the timestamp sanity check
+  @@now_secs = DateTime.now.strftime("%s").to_i
+
   def initialize(path)
     @path = path
     @filename = File.basename(path)
@@ -54,6 +58,19 @@ class CameraFile
     # We could use exiftool to grab it, but that turned out to be real slow
     # in testing.
     @timestamp = DateTime.parse(File.ctime(path).to_s)
+
+    # Sometimes it's good to do a sanity check. Like, for instance, if
+    # DJI can't set their ctimes properly even though the dang drone has
+    # a GPS connection which allows it to have atomic-accurate time whenever
+    # it's in the air. So if the filesystem timestamp gives me a date in the
+    # future, call out to exiftool to get a date from the file itself.
+    # This is a little slower, but the number of files broken in this way
+    # should be minimal.
+    timediff = @@now_secs - @timestamp.strftime("%s").to_i
+    if timediff < 0 then
+      exiftool_command = %w(exiftool -b -createdate).append(path).shelljoin
+      @timestamp = DateTime.strptime(`#{exiftool_command}`, '%Y:%m:%d %H:%M:%S')
+    end
   end
 
   attr_reader :timestamp, :path, :filename
