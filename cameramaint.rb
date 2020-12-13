@@ -233,7 +233,7 @@ def main
   abort() unless camerafiles.length > 0
 
   # Sort by timestamp
-  camerafiles.sort { |a, b| a.timestamp <=> b.timestamp }
+  camerafiles = camerafiles.sort { |a, b| a.timestamp <=> b.timestamp }
 
   operations = options[:mock] ?
   [
